@@ -1,0 +1,55 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Book Club Spellbook</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+    }
+    h1 {
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>📖 Book Club Spellbook</h1>
+  <table id="spells" class="display">
+    <thead>
+      <tr>
+        <th>Spell</th>
+        <th>Level</th>
+        <th>School</th>
+        <th>Wizards</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      const table = $('#spells').DataTable();
+
+      fetch('/api/spells')
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(spell => {
+            table.row.add([
+              spell.Spell,
+              spell.Level,
+              spell.School,
+              spell.Wizards.join(', ')
+            ]).draw();
+          });
+        })
+        .catch(error => {
+          console.error('Error loading spells:', error);
+        });
+    });
+  </script>
+</body>
+</html>
