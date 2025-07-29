@@ -34,7 +34,7 @@
     $(document).ready(function () {
       const table = $('#spells').DataTable();
 
-      fetch('/api/spells')
+      fetch('/data')
         .then(response => response.json())
         .then(data => {
           data.forEach(spell => {
