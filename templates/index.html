@@ -37,7 +37,7 @@
       fetch('/data')
         .then(response => response.json())
         .then(data => {
-          data.forEach(spell => {
+          data.spells.forEach(spell => {
             table.row.add([
               spell.Spell,
               spell.Level,
