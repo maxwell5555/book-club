@@ -45,6 +45,11 @@ def fetch_and_update_spell_data():
 def index():
     return render_template('index.html')
 
+@app.route("/data")
+def get_data():
+    with data_lock:
+        return jsonify(spells=wizard_data)
+
 # Run fetch job hourly
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=fetch_and_update_spell_data, trigger="interval", hours=1)
