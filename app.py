@@ -1,6 +1,6 @@
 import os
 import oci
-from flask import Flask, jsonify, redirect
+from flask import Flask, jsonify, render_template
 from apscheduler.schedulers.background import BackgroundScheduler
 from threading import Lock
 
@@ -41,14 +41,9 @@ def fetch_and_update_spell_data():
         print(f"❌ Failed to fetch or parse ODS: {e}")
 
 # API endpoint for frontend
-@app.route("/data")
-def get_data():
-    with data_lock:
-        return jsonify(spells=wizard_data)
-
 @app.route('/')
 def index():
-    return redirect('/data')
+    return render_template('index.html')
 
 # Run fetch job hourly
 scheduler = BackgroundScheduler()
