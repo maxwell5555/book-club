@@ -2,3 +2,6 @@ flask
 pandas
 odfpy
 gunicorn
+oci
+apscheduler
+ezodf
