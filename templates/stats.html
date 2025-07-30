@@ -97,20 +97,25 @@
             schoolMap[school] = schoolMap[school] || {};
             schoolMap[school][wizard] = (schoolMap[school][wizard] || 0) + 1;
 
-            // Initialize level counts
+            // Initialize an empty map to store spells by level
+            const spellsByLevel = {};
+
+            // Group spells by level
             spells.forEach(spell => {
             const level = spell.Level;
-            levelMap[level] = levelMap[level] || { known: 0, total: 0 };
-            levelMap[level].total += 1;
+            spellsByLevel[level] = spellsByLevel[level] || [];
+            spellsByLevel[level].push(spell);
             });
 
-            // Count only known (by anyone) spells per level
-            spells.forEach(spell => {
-            const level = spell.Level;
-            if (spell.Wizards.length > 0) {
-                levelMap[level].known += 1;
-            }
+            // Now compute levelMap with correct known/total counts
+            const levelMap = {};
+
+            Object.entries(spellsByLevel).forEach(([level, spellList]) => {
+            let total = spellList.length;
+            let known = spellList.filter(spell => spell.Wizards.length > 0).length;
+            levelMap[level] = { total, known };
             });
+
 
           });
 
