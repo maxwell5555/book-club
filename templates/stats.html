@@ -97,9 +97,21 @@
             schoolMap[school] = schoolMap[school] || {};
             schoolMap[school][wizard] = (schoolMap[school][wizard] || 0) + 1;
 
-            // Level map
+            // Initialize level counts
+            spells.forEach(spell => {
+            const level = spell.Level;
             levelMap[level] = levelMap[level] || { known: 0, total: 0 };
-            levelMap[level].known += 1;
+            levelMap[level].total += 1;
+            });
+
+            // Count only known (by anyone) spells per level
+            spells.forEach(spell => {
+            const level = spell.Level;
+            if (spell.Wizards.length > 0) {
+                levelMap[level].known += 1;
+            }
+            });
+
           });
 
           // Count total available per level
