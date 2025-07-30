@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spell Statistics</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      margin-bottom: 1em;
+    }
+    section {
+      margin-bottom: 2em;
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      margin-bottom: 0.3em;
+    }
+    .stat-line {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Spell Statistics</h1>
+
+  <section>
+    <h2>Overall Spell Coverage</h2>
+    <p class="stat-line" id="coverage-summary"></p>
+  </section>
+
+  <section>
+    <h2>Spells Known by Each Wizard</h2>
+    <ul id="wizard-counts"></ul>
+  </section>
+
+  <section>
+    <h2>Spells Known per School</h2>
+    <ul id="school-counts"></ul>
+  </section>
+
+  <section>
+    <h2>Spells Known per Level</h2>
+    <ul id="level-counts"></ul>
+  </section>
+
+  <section>
+    <h2>Wizard with Most Unique Spells</h2>
+    <p id="most-unique-wizard"></p>
+  </section>
+
+  <section>
+    <h2>Top Wizard in Each School</h2>
+    <ul id="school-top-wizards"></ul>
+  </section>
+
+  <section>
+    <h2>Top 5 Most Shared Spells</h2>
+    <ul id="top-shared-spells"></ul>
+  </section>
+
+  <script>
+    fetch('/data')
+      .then(res => res.json())
+      .then(data => {
+        const spells = data.spells;
+
+        const allSpellsSet = new Set(spells.map(spell => spell.Spell));
+        const knownSpellsSet = new Set();
+        const wizardSpellMap = {};
+        const schoolMap = {};
+        const levelMap = {};
+        const spellWizardMap = {};
+        const wizardUniqueSpellCount = {};
+        const schoolTopWizardMap = {};
+
+        spells.forEach(spell => {
+          const { Spell: name, School: school, Level: level, Wizards: wizards } = spell;
+          spellWizardMap[name] = wizards;
+
+          // known spell if at least one wizard knows it
+          if (wizards.length > 0) knownSpellsSet.add(name);
+
+          wizards.forEach(wizard => {
+            // Count spells per wizard
+            wizardSpellMap[wizard] = wizardSpellMap[wizard] || [];
+            wizardSpellMap[wizard].push(name);
+
+            // Spells per school per wizard
+            schoolMap[school] = schoolMap[school] || {};
+            schoolMap[school][wizard] = (schoolMap[school][wizard] || 0) + 1;
+
+            // Level map
+            levelMap[level] = levelMap[level] || { known: 0, total: 0 };
+            levelMap[level].known += 1;
+          });
+
+          // Count total available per level
+          levelMap[level] = levelMap[level] || { known: 0, total: 0 };
+          levelMap[level].total += 1;
+        });
+
+        // Coverage
+        const totalAvailable = allSpellsSet.size;
+        const totalKnown = knownSpellsSet.size;
+        const coveragePct = ((totalKnown / totalAvailable) * 100).toFixed(1);
+        document.getElementById('coverage-summary').textContent =
+          `${totalKnown}/${totalAvailable} spells known (${coveragePct}%)`;
+
+        // Wizard counts
+        const wizardCounts = Object.entries(wizardSpellMap)
+          .sort((a, b) => b[1].length - a[1].length);
+        const wizardCountsList = document.getElementById('wizard-counts');
+        wizardCounts.forEach(([wizard, spells]) => {
+          const li = document.createElement('li');
+          li.textContent = `${wizard}: ${spells.length} spells`;
+          wizardCountsList.appendChild(li);
+        });
+
+        // School counts
+        const schoolCounts = {};
+        for (const spell of spells) {
+          const school = spell.School;
+          if (spell.Wizards.length > 0) {
+            schoolCounts[school] = (schoolCounts[school] || 0) + 1;
+          }
+        }
+        const sortedSchools = Object.entries(schoolCounts).sort((a, b) => b[1] - a[1]);
+        const schoolList = document.getElementById('school-counts');
+        sortedSchools.forEach(([school, count]) => {
+          const li = document.createElement('li');
+          li.textContent = `${school}: ${count} spells`;
+          schoolList.appendChild(li);
+        });
+
+        // Level counts
+        const levelList = document.getElementById('level-counts');
+        Object.entries(levelMap).sort((a, b) => Number(a[0]) - Number(b[0]))
+          .forEach(([level, { known, total }]) => {
+            const pct = ((known / total) * 100).toFixed(1);
+            const li = document.createElement('li');
+            li.textContent = `Level ${level}: ${known}/${total} known (${pct}%)`;
+            levelList.appendChild(li);
+          });
+
+        // Unique spell count per wizard
+        for (const [wizard, spells] of Object.entries(wizardSpellMap)) {
+          wizardUniqueSpellCount[wizard] = spells.filter(spell =>
+            spellWizardMap[spell].length === 1
+          ).length;
+        }
+
+        const mostUnique = Object.entries(wizardUniqueSpellCount)
+          .sort((a, b) => b[1] - a[1])[0];
+        const uniqueEl = document.getElementById('most-unique-wizard');
+        uniqueEl.textContent = mostUnique
+          ? `${mostUnique[0]} with ${mostUnique[1]} unique spells`
+          : 'No unique spells found';
+
+        // Top wizard in each school
+        const schoolTopList = document.getElementById('school-top-wizards');
+        for (const [school, wizardMap] of Object.entries(schoolMap)) {
+          const top = Object.entries(wizardMap).sort((a, b) => b[1] - a[1])[0];
+          const li = document.createElement('li');
+          li.textContent = `${school}: ${top[0]} (${top[1]} spells)`;
+          schoolTopList.appendChild(li);
+        }
+
+        // Top 5 most shared spells
+        const topShared = spells
+          .map(spell => ({
+            name: spell.Spell,
+            count: spell.Wizards.length
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+        const sharedList = document.getElementById('top-shared-spells');
+        topShared.forEach(spell => {
+          const li = document.createElement('li');
+          li.textContent = `${spell.name}: ${spell.count} wizards`;
+          sharedList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load stats:', err);
+      });
+  </script>
+</body>
+</html>

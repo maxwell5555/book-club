@@ -50,6 +50,10 @@ def get_data():
     with data_lock:
         return jsonify(spells=wizard_data)
 
+@app.route('/stats')
+def stats():
+    return render_template('stats.html')
+
 # Run fetch job hourly
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=fetch_and_update_spell_data, trigger="interval", hours=1)
