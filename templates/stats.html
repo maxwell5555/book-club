@@ -97,25 +97,20 @@
             schoolMap[school] = schoolMap[school] || {};
             schoolMap[school][wizard] = (schoolMap[school][wizard] || 0) + 1;
 
-            // Initialize an empty map to store spells by level
-            const spellsByLevel = {};
-
-            // Group spells by level
+            // Initialize level counts
             spells.forEach(spell => {
             const level = spell.Level;
-            spellsByLevel[level] = spellsByLevel[level] || [];
-            spellsByLevel[level].push(spell);
+            levelMap[level] = levelMap[level] || { known: 0, total: 0 };
+            levelMap[level].total += 1;
             });
 
-            // Now compute levelMap with correct known/total counts
-            const levelMap = {};
-
-            Object.entries(spellsByLevel).forEach(([level, spellList]) => {
-            let total = spellList.length;
-            let known = spellList.filter(spell => spell.Wizards.length > 0).length;
-            levelMap[level] = { total, known };
+            // Count only known (by anyone) spells per level
+            spells.forEach(spell => {
+            const level = spell.Level;
+            if (spell.Wizards.length > 0) {
+                levelMap[level].known += 1;
+            }
             });
-
 
           });
 
@@ -163,7 +158,8 @@
           .forEach(([level, { known, total }]) => {
             const pct = ((known / total) * 100).toFixed(1);
             const li = document.createElement('li');
-            li.textContent = `Level ${level}: ${known}/${total} known (${pct}%)`;
+            //li.textContent = `Level ${level}: ${known}/${total} known (${pct}%)`;
+            li.textContent = `Level ${level}: (${pct}%)`;
             levelList.appendChild(li);
           });
 
