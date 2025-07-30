@@ -156,10 +156,10 @@
         const levelList = document.getElementById('level-counts');
         Object.entries(levelMap).sort((a, b) => Number(a[0]) - Number(b[0]))
           .forEach(([level, { known, total }]) => {
-            const pct = ((known / total) * 100).toFixed(1);
+            const pct = ((known / total) * 100).toFixed(0);
             const li = document.createElement('li');
             //li.textContent = `Level ${level}: ${known}/${total} known (${pct}%)`;
-            li.textContent = `Level ${level}: (${pct}%)`;
+            li.textContent = `Level ${level}: ${pct}%`;
             levelList.appendChild(li);
           });
 
